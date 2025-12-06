@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J env               # Job name
+#SBATCH -J launch               # Job name
 #SBATCH -p cpu-farm               # Partition name
 #SBATCH --qos=normal      # Quality of Service
 #SBATCH --nodes=1                 # Number of nodes
