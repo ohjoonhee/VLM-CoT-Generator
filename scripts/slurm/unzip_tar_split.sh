@@ -11,6 +11,6 @@ cd data_viscot/cot_images_tar_split
 
 echo "Working directory: $(pwd)"
 
-cat cot_images_* | tar x
+cat cot_images_* | tar -xv
 
 echo "Done"
