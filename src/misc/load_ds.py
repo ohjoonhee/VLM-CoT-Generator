@@ -37,10 +37,10 @@ def main():
     print(ds)
     ds = ds.cast_column("dataset", datasets.Value("string"))
 
-    ds = ds.map(process_image, num_proc=max(os.cpu_count() - 1, 1))
+    ds = ds.map(process_image, num_proc=max(cpus - 1, 1))
     ds = ds.cast_column("image", datasets.List(datasets.Image()))
     print(ds[0])
-    ds.push_to_hub("Visual-CoT-Sampled", split="train", num_proc=max(os.cpu_count() - 1, 1))
+    ds.push_to_hub("Visual-CoT-Sampled", split="train", num_proc=max(cpus - 1, 1))
 
 
 if __name__ == "__main__":
