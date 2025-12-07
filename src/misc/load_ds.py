@@ -25,7 +25,8 @@ def process_image(example):
 
 
 def main():
-    print("CPU Count: ", os.cpu_count())
+    cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count()))
+    print("CPU Count: ", cpus)
     ds = load_dataset("json", data_files="data_viscot/viscot_363k.json", split="train")
     # ds = ds.select(range(100))
     print(ds)
@@ -39,7 +40,7 @@ def main():
     ds = ds.map(process_image, num_proc=max(os.cpu_count() - 1, 1))
     ds = ds.cast_column("image", datasets.List(datasets.Image()))
     print(ds[0])
-    ds.push_to_hub("Visual-CoT-Sampled", split="train")
+    ds.push_to_hub("Visual-CoT-Sampled", split="train", num_proc=max(os.cpu_count() - 1, 1))
 
 
 if __name__ == "__main__":
