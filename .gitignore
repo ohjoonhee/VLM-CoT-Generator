@@ -13,3 +13,6 @@ wheels/
 # data
 data/
 data_*/
+
+# temp 
+tmp/
