@@ -6,6 +6,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=112
 #SBATCH -o logs/%x_%j.log
+#SBATCH -e logs/%x_%j.log
 #SBATCH --account=gpu
 
 set -a
