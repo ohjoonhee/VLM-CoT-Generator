@@ -8,4 +8,5 @@ dependencies = [
     "datasets>=4.4.1",
     "openai>=2.9.0",
     "pillow>=12.0.0",
+    "vllm>=0.12.0",
 ]
