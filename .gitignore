@@ -16,3 +16,6 @@ data_*/
 
 # temp 
 tmp/
+
+# Credentials
+.env
