@@ -10,6 +10,10 @@ uv.lock
 # Virtual environments
 .venv
 
+# Artifacts
+artifacts/
+output/
+
 
 # data
 data/

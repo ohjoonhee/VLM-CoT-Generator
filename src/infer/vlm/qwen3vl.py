@@ -12,60 +12,26 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:10630/v1")
 API_KEY = os.getenv("API_KEY", "EMPTY")
 MODEL_NAME = os.getenv("MODEL", "Qwen/Qwen3-VL-8B-Thinking")
 
-SYSTEM_PROMPT = """
-You are a deep-thinking visual reasoner.  
-All reasoning inside <think> ... </think> MUST strictly follow the Thinking Protocol below.  
-Never skip steps. Never look at the image before planning.
-
-=====================
-THINKING PROTOCOL
-=====================
-
-1. PLAN BEFORE LOOKING  
-   - When <think> begins, you must NOT inspect the image yet.  
-   - First restate the task in 1-2 sentences.  
-   - Then decompose the task into a short sequence of *atomic, executable steps* (2-6 steps).  
-   - Each step must describe a specific operation, such as:  
-        - “Identify all animals in the scene.”  
-        - “Check whether the man is riding any of them.”  
-        - “Compare the price tags.”  
-        - “Count the bottles on the top three shelves.”
-
-2. STEP-WISE VISUAL REASONING  
-   - After completing the plan, inspect the image *step by step*, never all at once.  
-   - For each step in your plan, do the following:
-        a. Announce the step (e.g., “Now executing Step 2: Identify candidate animals”).  
-        b. Look at the image ONLY for information required for that step.  
-           Do NOT give a general scene description.  
-        c. Extract precise visual evidence directly relevant to the step.  
-        d. Perform a **local verification**, such as:
-             - “Are there other possible candidates?”  
-             - “Could this object be interpreted differently?”  
-             - “Is the relation ambiguous?”  
-        e. Resolve ambiguities before moving to the next step.
-
-3. FINAL SYNTHESIS  
-   - After all steps are executed and verified, derive the final answer concisely.  
-   - Do NOT repeat generic descriptions.  
-   - The final answer should reflect the validated reasoning.
-
-=====================
-FORMAT REQUIREMENTS
-=====================
-Your <think> must contain:
-   1. A Planning section (before any visual inspection).  
-   2. A Step-by-step execution section with local verification for each step.  
-   3. A final synthesis leading to the answer.
-
-Your reasoning must be natural and explicit, never terse.  
-Do NOT output anything outside <think> tags except the final answer.
-"""
+DEFAULT_SYSTEM_PROMPT = ""
 
 
-def encode_image(image: Image.Image):
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    return base64.b64encode(buffered.getvalue()).decode("utf-8")
+def process_image(image_input):
+    if isinstance(image_input, Image.Image):
+        buffered = BytesIO()
+        image_input.save(buffered, format="JPEG")
+        return base64.b64encode(buffered.getvalue()).decode("utf-8")
+    elif isinstance(image_input, str):
+        # Check if it's a file path
+        if len(image_input) < 4096 and os.path.exists(image_input):
+            image = Image.open(image_input)
+            buffered = BytesIO()
+            image.save(buffered, format="JPEG")
+            return base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return image_input
+    elif isinstance(image_input, bytes):
+        return base64.b64encode(image_input).decode("utf-8")
+    else:
+        raise ValueError(f"Unsupported image type: {type(image_input)}")
 
 
 def main():
@@ -76,6 +42,9 @@ def main():
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size (currently treating as 1 for simplicity loop).")
     parser.add_argument("--model", type=str, default=MODEL_NAME, help="Model name for API.")
     parser.add_argument("--port", type=str, default=None, help="Port override for API.")
+    parser.add_argument("--image_column", type=str, default="image", help="Column name for image.")
+    parser.add_argument("--question_column", type=str, default="question", help="Column name for question.")
+    parser.add_argument("--system_prompt_path", type=str, default=None, help="Path to system prompt text file.")
 
     args = parser.parse_args()
 
@@ -89,7 +58,16 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    output_file = os.path.join(args.output_dir, f"{args.model.split('/')[-1]}_results.jsonl")
+    system_prompt = DEFAULT_SYSTEM_PROMPT
+    if args.system_prompt_path:
+        print(f"Loading system prompt from {args.system_prompt_path}")
+        with open(args.system_prompt_path, "r") as f:
+            system_prompt = f.read()
+
+    sanitized_model_name = args.model.replace("/", "__")
+    sanitized_dataset_name = args.dataset_name.replace("/", "__")
+
+    output_file = os.path.join(args.output_dir, f"{sanitized_model_name}_{sanitized_dataset_name}_results.jsonl")
 
     dataset = load_dataset(args.dataset_name, split=args.split)
 
@@ -112,14 +90,14 @@ def main():
                 print(f"Processing {i}/{total}")
 
             try:
-                question = item["question"]
-                image: Image.Image = item["image"]
-                base64_image = encode_image(image)
+                question = item[args.question_column]
+                image_input = item[args.image_column]
+                base64_image = process_image(image_input)
 
                 response = client.chat.completions.create(
                     model=args.model,
                     messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "system", "content": system_prompt},
                         {
                             "role": "user",
                             "content": [
