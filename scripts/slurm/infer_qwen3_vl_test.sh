@@ -10,14 +10,14 @@ export MODEL="Qwen/Qwen3-VL-8B-Thinking"
 
 # vllm serve $MODEL --enable-auto-tool-choice --tool-call-parser hermes --reasoning-parser deepseek_r1 --gpu-memory-utilization 0.4 &
 
-vllm serve $MODEL \
+uv run vllm serve $MODEL \
     --port 10630 \
     --enable-auto-tool-choice \
     --tool-call-parser hermes \
     --gpu-memory-utilization 0.95 \
     --enforce-eager \
-    --max-model-len 32768 \
-    --reasoning-parser deepseek_r1 &
+    --max-model-len 32768 &
+    # --reasoning-parser deepseek_r1 &
     # --quantization fp8 &
     # --tensor-parallel-size 4 \
 
@@ -51,7 +51,10 @@ if [ $SERVER_READY -eq 0 ]; then
 fi
 
 echo "VLLM is ready. Running inference script..."
-python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output"
+uv run python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output" --system_prompt_path "configs/prompts/think_first_v0.txt" --dataset_name "ohjoonhee/Visual-CoT-4k" --split "train"
+uv run python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output" --system_prompt_path "configs/prompts/think_first_v0.txt" --dataset_name "DreamMr/HR-Bench" --split "hrbench_4k"
+uv run python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output" --system_prompt_path "configs/prompts/think_first_v0.txt" --dataset_name "DreamMr/HR-Bench" --split "hrbench_8k"
+uv run python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output" --system_prompt_path "configs/prompts/think_first_v0.txt" --dataset_name "jonathan-roberts1/zerobench" --split "zerobench" --question_column "question_text" --image_column "question_images_decoded"
 
 
 echo "Inference complete. Stopping VLLM server (PID: $VLLM_PID)..."

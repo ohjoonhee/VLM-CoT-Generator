@@ -15,7 +15,7 @@ MODEL_NAME = os.getenv("MODEL", "Qwen/Qwen3-VL-8B-Thinking")
 DEFAULT_SYSTEM_PROMPT = ""
 
 
-def process_image(image_input):
+def _process_single_image(image_input):
     if isinstance(image_input, Image.Image):
         buffered = BytesIO()
         image_input.save(buffered, format="JPEG")
@@ -32,6 +32,12 @@ def process_image(image_input):
         return base64.b64encode(image_input).decode("utf-8")
     else:
         raise ValueError(f"Unsupported image type: {type(image_input)}")
+
+
+def process_image(image_input):
+    if isinstance(image_input, list):
+        return [_process_single_image(img) for img in image_input]
+    return [_process_single_image(image_input)]
 
 
 def main():
@@ -66,8 +72,9 @@ def main():
 
     sanitized_model_name = args.model.replace("/", "__")
     sanitized_dataset_name = args.dataset_name.replace("/", "__")
+    sanitized_split_name = args.split.replace("/", "__")
 
-    output_file = os.path.join(args.output_dir, f"{sanitized_model_name}_{sanitized_dataset_name}_results.jsonl")
+    output_file = os.path.join(args.output_dir, f"{sanitized_model_name}_{sanitized_dataset_name}_{sanitized_split_name}_results.jsonl")
 
     dataset = load_dataset(args.dataset_name, split=args.split)
 
@@ -92,28 +99,30 @@ def main():
             try:
                 question = item[args.question_column]
                 image_input = item[args.image_column]
-                base64_image = process_image(image_input)
+                base64_images = process_image(image_input)
+
+                content = []
+                for b64_img in base64_images:
+                    content.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"},
+                        }
+                    )
+                content.append({"type": "text", "text": question})
 
                 response = client.chat.completions.create(
                     model=args.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "image_url",
-                                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                                },
-                                {"type": "text", "text": question},
-                            ],
-                        },
+                        {"role": "user", "content": content},
                     ],
                     max_tokens=4096,
                     temperature=0.7,
                 )
 
                 prediction = response.choices[0].message.content
+                # print(response)
 
                 result = {
                     "question": question,
