@@ -19,7 +19,7 @@ export MODEL="Qwen/Qwen3-VL-235B-A22B-Thinking-FP8"
 
 # vllm serve $MODEL --enable-auto-tool-choice --tool-call-parser hermes --reasoning-parser deepseek_r1 --gpu-memory-utilization 0.4 &
 
-vllm serve $MODEL \
+uv run vllm serve $MODEL \
     --port 10630 \
     --enable-auto-tool-choice \
     --tool-call-parser hermes \
@@ -60,7 +60,7 @@ if [ $SERVER_READY -eq 0 ]; then
 fi
 
 echo "VLLM is ready. Running inference script..."
-python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output"
+uv run python src/infer/vlm/qwen3vl.py --model "$MODEL" --port 10630 --output_dir "output"
 
 
 echo "Inference complete. Stopping VLLM server (PID: $VLLM_PID)..."
