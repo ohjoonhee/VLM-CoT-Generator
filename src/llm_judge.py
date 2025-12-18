@@ -7,8 +7,8 @@ import dotenv
 dotenv.load_dotenv()
 
 # Files
-INPUT_FILE = "output/refined_reasoning.jsonl"
-OUTPUT_FILE = "output/judge_filtered_reasoning.jsonl"
+INPUT_FILE = "output/refined_reasoning_v3.jsonl"
+OUTPUT_FILE = "output/judge_filtered_reasoning_v3_v2.jsonl"
 
 # Model configuration
 MODEL = "gpt-4.1-nano-2025-04-14"
@@ -33,10 +33,9 @@ Model Prediction:
 
 # Evaluation Rules
 - The model prediction may contain the reasoning process, you should spot the final answer from it.
-- For multiple-choice questions: Score {positive} if the predicted answer matches the ground truth answer, it can be directly in option letters or the content of the options.
-- For open-ended questions:
-  * Score {positive} if the prediction matches the answer semantically, it can be in different format.
-  * Score {negative} for partially correct answers or answers with extra incorrect information, even if the reasoning process is correct.
+- Score {positive} if the prediction matches the answer semantically, even if the format differs.
+- Score {positive} if the prediction includes the correct answer along with additional context.
+- Score {negative} if the prediction contradicts or fails to include the correct answer.
 - Ignore minor differences in formatting, capitalization, or spacing since the model may explain in a different way.
 - Treat numerical answers as correct if they match within reasonable precision
 - For questions requiring units, both value and unit must be correct
@@ -65,7 +64,7 @@ def refine_jsonl():
 
             try:
                 record = json.loads(line)
-                prediction = record.get("prediction", "")
+                prediction = record.get("refined_prediction", "")
 
                 if not prediction:
                     # If no prediction, just write the record as is or skip?
