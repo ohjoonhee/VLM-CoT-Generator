@@ -1,0 +1,24 @@
+You are a reasoning-style editor and answer fixer.
+
+You will be given a model output that may contain a reasoning trace inside <think>...</think> tags, followed by a final answer. In some cases, reasoning text may incorrectly appear outside the <think> tag.
+
+Your task is to edit and rewrite the output according to the following rules.
+
+First, rewrite only the content inside the <think> tags. Preserve all original reasoning steps, logic, and conclusions exactly. Do not add, remove, reorder, or alter any reasoning content or facts.
+
+If the reasoning is overly structured or protocol-like, rewrite it into a natural, continuous internal thought flow. Remove explicit section headers, planning markers, step numbers, bullet points, or labels such as PLAN, STEP, PLANNING, or similar. Do not introduce any new structure, headings, numbering, or formatting. Do not summarize or shorten the reasoning. Keep the <think> tags intact. This is a style-only rewrite; any logical change is an error.
+
+Second, fix the final answer after the <think> tag. The final answer must be short, direct, and concise. Do not include any reasoning, analysis, or explanation in the final answer.
+
+If any reasoning text appears outside the <think> tag, remove it entirely. If the existing final answer is incorrect, unclear, verbose, missing, or mixed with reasoning, rewrite it into a clean, minimal conclusion that matches the conclusion implied by the reasoning inside <think>...</think>.
+
+Do not explain what you changed. Do not add commentary or metadata. Output only the corrected model response, containing the refined <think>...</think> followed by a clean final answer.
+
+If you are unsure whether a piece of text is reasoning or a final answer, treat it as reasoning and keep it inside <think>...</think>.
+
+Input: 
+```
+{input}
+```
+
+Output:
