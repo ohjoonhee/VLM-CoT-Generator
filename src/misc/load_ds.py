@@ -55,13 +55,13 @@ def main():
     print(ds[0])
 
     ds: datasets.Dataset = ds.cast_column("dataset", datasets.ClassLabel(names=ds.unique("dataset")))
-    _, ds = ds.train_test_split(test_size=0.01, stratify_by_column="dataset").values()
+    _, ds = ds.train_test_split(test_size=60_000, stratify_by_column="dataset").values()
     print(ds)
 
     ds = ds.map(process_example, num_proc=max(cpus - 1, 1))
     ds = ds.cast_column("image", datasets.Image())
     print(ds[0])
-    ds.push_to_hub("Visual-CoT-4k", split="train")
+    ds.push_to_hub("Visual-CoT-60k", split="train")
 
 
 if __name__ == "__main__":
