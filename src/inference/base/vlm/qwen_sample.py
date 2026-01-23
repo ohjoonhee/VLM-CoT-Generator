@@ -61,14 +61,22 @@ def load_image(image_path):
         return base64.b64encode(f.read()).decode("utf-8")
 
 
+USER_PROMPT = """
+Image 1 shows the three sample types of screws for reference. Based on this reference, we assign class to the screws as follows: largest=A, middle=B, small=C. Now take a look at image 2.
+
+In image 2, count the number of class A screws.
+""".strip()
+
+
 def main():
     client = Client(base_url=BASE_URL, api_key=API_KEY)
-    base64_image = load_image("data/700.jpg")
+    base64_image = load_image("data/image-1d100e9-3.jpg")
+    base64_image_2 = load_image("data/image-1d300ea.jpg")
 
     response = client.chat.completions.create(
         model="Qwen/Qwen3-VL-8B-Thinking",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            # {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
                 "content": [
@@ -76,7 +84,11 @@ def main():
                         "type": "image_url",
                         "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
                     },
-                    {"type": "text", "text": "What is the sum of the sales for Item 1 and Item 6?\nA. 97\nB. 96\nC. 95\nD. 94\n"},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image_2}"},
+                    },
+                    {"type": "text", "text": USER_PROMPT},
                 ],
             },
         ],
