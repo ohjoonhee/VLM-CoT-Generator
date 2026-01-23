@@ -24,3 +24,7 @@ tmp/
 
 # Credentials
 .env
+
+workspace
+
+debug/
