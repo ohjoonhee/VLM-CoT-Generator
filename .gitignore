@@ -18,6 +18,7 @@ output/
 # data
 data/
 data_*/
+configs/imgid2annotids.json
 
 # temp 
 tmp/
